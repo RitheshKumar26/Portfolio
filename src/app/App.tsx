@@ -1,4 +1,4 @@
-import { Terminal, Mail, Github, Linkedin, ExternalLink } from 'lucide-react';
+import { Terminal, Mail, Github, Linkedin, ExternalLink, X } from 'lucide-react';
 
 // Local asset imports
 import imgNaju from '../assets/naju.png';
@@ -273,7 +273,7 @@ export default function App() {
 
             {/* Desktop Menu */}
             <div className="hidden lg:flex items-center gap-8 xl:gap-12 ml-auto mr-8">
-              {['Summary', 'Skills', 'Projects', 'Tools', 'Contact'].map((item) => (
+              {['Summary', 'Skills', 'Tools', 'Contact'].map((item) => (
                 <button
                   key={item}
                   onClick={() => scrollToSection(item.toLowerCase())}
@@ -327,7 +327,7 @@ export default function App() {
         className={`lg:hidden fixed inset-0 bg-black z-40 transition-all duration-300 ease-in-out ${mobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
       >
         <div className="flex flex-col items-center justify-center h-full space-y-8">
-          {['Summary', 'Skills', 'Projects', 'Tools', 'Contact'].map((item, index) => (
+          {['Summary', 'Skills', 'Tools', 'Contact'].map((item, index) => (
             <button
               key={item}
               onClick={() => {
@@ -586,8 +586,8 @@ export default function App() {
         </div>
       </section>
 
-      {/* Projects */}
-      <section id="projects" className="relative min-h-screen py-16 lg:py-24 bg-black snap-start flex flex-col justify-center">
+      {/* Projects - Hidden */}
+      <section id="projects" className="hidden relative min-h-screen py-16 lg:py-24 bg-black snap-start flex flex-col justify-center">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4 mb-12 lg:mb-16">
             <Terminal className="text-[#00D23B] w-6 h-6" />
@@ -874,9 +874,17 @@ export default function App() {
                   {statusMessage && (
                     <div 
                       style={{ fontFamily: 'Fragment Mono, monospace' }}
-                      className={`p-3 text-sm ${formStatus === 'success' ? 'bg-[#00D23B]/20 text-[#00D23B] border border-[#00D23B]/50' : 'bg-red-500/20 text-red-400 border border-red-500/50'}`}
+                      className={`p-3 text-sm flex items-center justify-between ${formStatus === 'success' ? 'bg-[#00D23B]/20 text-[#00D23B] border border-[#00D23B]/50' : 'bg-red-500/20 text-red-400 border border-red-500/50'}`}
                     >
-                      {formStatus === 'success' ? '✓' : '✗'} {statusMessage}
+                      <span>{formStatus === 'success' ? '✓' : '✗'} {statusMessage}</span>
+                      <button
+                        type="button"
+                        onClick={() => { setStatusMessage(''); setFormStatus('idle'); }}
+                        className="ml-3 hover:opacity-70 transition-opacity"
+                        aria-label="Close message"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
                   )}
 
