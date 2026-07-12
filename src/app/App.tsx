@@ -836,7 +836,7 @@ export default function App() {
                         type="text"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Bhai"
+                        placeholder=" Ghost"
                         style={{ fontFamily: 'Fragment Mono, monospace' }}
                         className="w-full bg-transparent border border-white/30 px-4 py-3 text-white/75 placeholder:text-white/30 focus:border-[#66FF00] focus:outline-none text-sm"
                       />
@@ -849,7 +849,7 @@ export default function App() {
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        placeholder="bhai@gmail.com"
+                        placeholder="ghost@gmail.com"
                         style={{ fontFamily: 'Fragment Mono, monospace' }}
                         className="w-full bg-transparent border border-white/30 px-4 py-3 text-white/75 placeholder:text-white/30 focus:border-[#66FF00] focus:outline-none text-sm"
                       />
@@ -863,7 +863,7 @@ export default function App() {
                     <textarea
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      placeholder="Your message here"
+                      placeholder="Transmit your message..."
                       rows={6}
                       style={{ fontFamily: 'Fragment Mono, monospace' }}
                       className="w-full bg-transparent border border-white/30 px-4 py-3 text-white/75 placeholder:text-white/30 focus:border-[#66FF00] focus:outline-none resize-none text-sm"
