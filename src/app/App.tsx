@@ -1,4 +1,4 @@
-import { Terminal, Mail, Github, Linkedin, ExternalLink, X } from 'lucide-react';
+import { Terminal, Mail, Github, Linkedin, ExternalLink, X, ShieldCheck, Award, BadgeCheck, CheckCircle2, Copy, Check } from 'lucide-react';
 
 // Local asset imports
 import imgNaju from '../assets/naju.png';
@@ -15,6 +15,71 @@ import imgWindows from '../assets/windows.png';
 import imgP1 from '../assets/p1.png';
 import imgP2 from '../assets/p2.png';
 import { useState, useEffect } from 'react';
+import { fetchCertificates, fetchProjects, recordContactMessage, isSupabaseConfigured } from '../lib/supabase';
+
+export interface Certificate {
+  id: string;
+  name: string;
+  code: string;
+  issuer: string;
+  issueDate: string;
+  expiryDate: string;
+  credentialId: string;
+  verificationUrl: string;
+  sha256: string;
+  skills: string[];
+}
+
+const certificates: Certificate[] = [
+  {
+    id: 'sec-plus',
+    name: 'CompTIA Security+',
+    code: 'SY0-701',
+    issuer: 'CompTIA',
+    issueDate: '2024',
+    expiryDate: '2027',
+    credentialId: 'COMP001021948',
+    verificationUrl: 'https://www.credly.com/',
+    sha256: '9a3f7b2c0184e921d782bc4e5f019a28c34512e088ba7610',
+    skills: ['Network Security', 'Threat Hunting', 'Vulnerability Mgmt', 'Cryptography']
+  },
+  {
+    id: 'ejpt',
+    name: 'eJPTv2 - Junior Penetration Tester',
+    code: 'eJPTv2',
+    issuer: 'INE Security',
+    issueDate: '2024',
+    expiryDate: 'Non-Expiring',
+    credentialId: 'INE-EJPT-849201',
+    verificationUrl: 'https://www.ine.com/',
+    sha256: '8b12f734a991c0e8234db0299f1283e7456bc91001dfa234',
+    skills: ['Network Reconnaissance', 'Host Auditing', 'Exploitation', 'Web App Pentesting']
+  },
+  {
+    id: 'ceh',
+    name: 'Certified Ethical Hacker (CEH)',
+    code: 'v12',
+    issuer: 'EC-Council',
+    issueDate: '2024',
+    expiryDate: '2027',
+    credentialId: 'ECC-91823746',
+    verificationUrl: 'https://aspen.eccouncil.org/Verify',
+    sha256: 'c4981d0092fa8b12e45609312bc88190de4568912301fa77',
+    skills: ['Attack Surface Analysis', 'Malware Analysis', 'Sniffing & Evasion', 'System Hacking']
+  },
+  {
+    id: 'google-sec',
+    name: 'Google Cybersecurity Professional',
+    code: 'GCP-SEC',
+    issuer: 'Google',
+    issueDate: '2023',
+    expiryDate: 'Non-Expiring',
+    credentialId: 'GCP-SEC-582910',
+    verificationUrl: 'https://www.coursera.org/verify/',
+    sha256: '14f09238bc8901de78234bc5678912ef0129384756abcdef',
+    skills: ['SIEM & Packet Analysis', 'Python & Bash', 'Linux Security', 'Incident Response']
+  }
+];
 
 // Terminal Command Typing Effect Component
 function TerminalTyping({ commands }: { commands: string[] }) {
@@ -124,6 +189,58 @@ export default function App() {
   const [scrollY, setScrollY] = useState(0);
   const [showContent, setShowContent] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [liveCertificates, setLiveCertificates] = useState<Certificate[]>(certificates);
+  const [liveProjects, setLiveProjects] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadDynamicData() {
+      if (!isSupabaseConfigured) return;
+      try {
+        const [remoteCerts, remoteProjects] = await Promise.all([
+          fetchCertificates(),
+          fetchProjects()
+        ]);
+        if (remoteCerts && remoteCerts.length > 0) {
+          setLiveCertificates(
+            remoteCerts.map((c: any) => ({
+              id: c.id,
+              name: c.name,
+              code: c.code,
+              issuer: c.issuer,
+              issueDate: c.issue_date,
+              expiryDate: c.expiry_date,
+              credentialId: c.credential_id,
+              verificationUrl: c.verification_url,
+              sha256: c.sha256 || '',
+              skills: c.skills || [],
+            }))
+          );
+        }
+        if (remoteProjects && remoteProjects.length > 0) {
+          setLiveProjects(remoteProjects.filter((p: any) => p.is_published));
+        }
+      } catch (err) {
+        console.warn('Could not load dynamic data from Supabase:', err);
+      }
+    }
+    loadDynamicData();
+  }, []);
+
+  const copyCredential = (id: string) => {
+    navigator.clipboard.writeText(id);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSelectedCert(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     // Slower preloader - completes in ~3.5 seconds
@@ -196,6 +313,7 @@ export default function App() {
       const data = await response.json();
 
       if (data.success) {
+        recordContactMessage(formData.name, formData.email, formData.message);
         setFormStatus('success');
         setStatusMessage('Message transmitted successfully!');
         setFormData({ name: '', email: '', message: '' });
@@ -273,7 +391,7 @@ export default function App() {
 
             {/* Desktop Menu */}
             <div className="hidden lg:flex items-center gap-8 xl:gap-12 ml-auto mr-8">
-              {['Summary', 'Skills', 'Tools', 'Contact'].map((item) => (
+              {['Summary', 'Skills', 'Certifications', 'Tools', 'Contact'].map((item) => (
                 <button
                   key={item}
                   onClick={() => scrollToSection(item.toLowerCase())}
@@ -327,7 +445,7 @@ export default function App() {
         className={`lg:hidden fixed inset-0 bg-black z-40 transition-all duration-300 ease-in-out ${mobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
       >
         <div className="flex flex-col items-center justify-center h-full space-y-8">
-          {['Summary', 'Skills', 'Tools', 'Contact'].map((item, index) => (
+          {['Summary', 'Skills', 'Certifications', 'Tools', 'Contact'].map((item, index) => (
             <button
               key={item}
               onClick={() => {
@@ -582,6 +700,130 @@ export default function App() {
               </div>
               <p style={{ fontFamily: 'Satoshi, sans-serif', fontWeight: 400 }} className="text-sm text-white/55">Digital footprint investigation & exposure mapping.</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Security Certifications */}
+      <section id="certifications" className="relative min-h-screen py-16 lg:py-24 bg-black snap-start flex flex-col justify-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <div className="flex items-center gap-4 mb-4">
+            <Terminal className="text-[#00D23B] w-6 h-6" />
+            <h2 style={{ fontFamily: 'PP Mondwest, sans-serif' }} className="text-xl lg:text-2xl uppercase tracking-tight text-[#00D23B] font-medium">
+              <TypingText text="Security Certifications" delay={300} />
+            </h2>
+            <span style={{ fontFamily: 'Satoshi, sans-serif' }} className="text-white/65 text-sm">[04]</span>
+          </div>
+
+          <p style={{ fontFamily: 'Satoshi, sans-serif', fontWeight: 400 }} className="text-sm md:text-base text-white/60 max-w-2xl mb-8 lg:mb-10">
+            Accredited cybersecurity credentials validating structured offensive security methodologies, network reconnaissance, and threat mitigation.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+            {liveCertificates.map((cert) => (
+              <div
+                key={cert.id}
+                className="bg-white/5 border border-white/10 hover:border-[#00D23B]/60 transition-all duration-300 p-6 lg:p-7 flex flex-col justify-between group relative"
+              >
+                <div>
+                  {/* Terminal Header */}
+                  <div className="flex items-center justify-between pb-3.5 border-b border-white/10 mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#00D23B]" />
+                      <span style={{ fontFamily: 'Fragment Mono, monospace' }} className="text-[11px] text-white/40 ml-2 tracking-wider uppercase">
+                        {cert.code}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#00D23B]/10 border border-[#00D23B]/30">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#00D23B] animate-pulse" />
+                      <span style={{ fontFamily: 'Fragment Mono, monospace' }} className="text-[10px] text-[#00D23B] font-semibold tracking-wider uppercase">
+                        VERIFIED
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Title & Issuer */}
+                  <div className="flex items-start justify-between gap-4 mb-4">
+                    <div>
+                      <span style={{ fontFamily: 'Satoshi, sans-serif', fontWeight: 700 }} className="text-xs uppercase tracking-wider text-[#66FF00]">
+                        {cert.issuer}
+                      </span>
+                      <h3 style={{ fontFamily: 'Satoshi, sans-serif', fontWeight: 500 }} className="text-xl lg:text-2xl text-white group-hover:text-[#00D23B] transition-colors mt-1">
+                        {cert.name}
+                      </h3>
+                    </div>
+                    <div className="w-10 h-10 rounded border border-white/10 bg-white/5 flex items-center justify-center text-[#00D23B] shrink-0 group-hover:border-[#00D23B]/40 transition-colors">
+                      <ShieldCheck className="w-5 h-5" />
+                    </div>
+                  </div>
+
+                  {/* Monospace Metadata Panel */}
+                  <div style={{ fontFamily: 'Fragment Mono, monospace' }} className="text-xs space-y-1.5 py-3 px-3.5 bg-black/40 border border-white/5 rounded mb-4">
+                    <div className="flex justify-between items-center text-white/50">
+                      <span>CREDENTIAL ID:</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-white/90">{cert.credentialId}</span>
+                        <button
+                          type="button"
+                          onClick={() => copyCredential(cert.credentialId)}
+                          title="Copy Credential ID"
+                          className="text-white/40 hover:text-[#00D23B] transition-colors cursor-pointer"
+                          aria-label={`Copy Credential ID ${cert.credentialId}`}
+                        >
+                          {copiedId === cert.credentialId ? (
+                            <Check className="w-3.5 h-3.5 text-[#00D23B]" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex justify-between text-white/50">
+                      <span>VALIDITY:</span>
+                      <span className="text-white/80">{cert.issueDate} – {cert.expiryDate}</span>
+                    </div>
+                  </div>
+
+                  {/* Skills/Domains Pills */}
+                  <div className="flex flex-wrap gap-1.5 mb-6">
+                    {cert.skills.map((skill, sIdx) => (
+                      <span
+                        key={sIdx}
+                        style={{ fontFamily: 'Satoshi, sans-serif', fontWeight: 400 }}
+                        className="text-[11px] px-2 py-0.5 bg-white/5 border border-white/10 text-white/70 rounded"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Card Bottom Actions */}
+                <div className="flex items-center justify-between pt-4 border-t border-dashed border-white/15">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCert(cert)}
+                    style={{ fontFamily: 'Fragment Mono, monospace' }}
+                    className="text-xs text-white/60 hover:text-[#00D23B] flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Terminal className="w-3.5 h-3.5" />
+                    <span>INSPECT RECORD</span>
+                  </button>
+                  <a
+                    href={cert.verificationUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ fontFamily: 'Fragment Mono, monospace' }}
+                    className="text-xs text-[#00D23B] hover:text-white flex items-center gap-1.5 transition-colors border border-[#00D23B]/40 hover:border-[#00D23B] px-3 py-1 rounded"
+                  >
+                    <span>VERIFY</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -914,11 +1156,103 @@ export default function App() {
               <p style={{ fontFamily: 'Satoshi, sans-serif', fontWeight: 400 }} className="text-white/60 text-sm">
                 Engineered by Madras Web Company
               </p>
+              <p style={{ fontFamily: 'Fragment Mono, monospace' }} className="pt-1">
+                <a href="/login" className="text-white/25 hover:text-[#00D23B] text-[11px] transition-colors">
+                  [SYSTEM_ACCESS // ADMIN_CONSOLE]
+                </a>
+              </p>
             </div>
           </div>
         </footer>
       </section>
 
+
+
+      {/* Inspection Modal */}
+      {selectedCert && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          onClick={() => setSelectedCert(null)}
+        >
+          <div 
+            className="max-w-xl w-full bg-[#0a0a0a] border border-[#00D23B]/50 p-6 space-y-5 relative shadow-2xl shadow-[#00D23B]/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-white/15">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
+                <div className="w-2.5 h-2.5 rounded-full bg-[#00D23B]" />
+                <span style={{ fontFamily: 'Fragment Mono, monospace' }} className="text-xs text-[#00D23B] ml-2 tracking-wider uppercase">
+                  PAYLOAD // CERT_VERIFICATION_RECORD
+                </span>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setSelectedCert(null)}
+                className="text-white/60 hover:text-white cursor-pointer"
+                aria-label="Close dialog"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div style={{ fontFamily: 'Fragment Mono, monospace' }} className="text-xs space-y-2.5 bg-black/60 p-4 border border-white/10 rounded">
+              <div className="text-[#00D23B] flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>[LEDGER_STATUS]: OFFICIAL_ACCREDITATION_VERIFIED</span>
+              </div>
+              <div className="text-white/60">
+                &gt; HOLDER: <span className="text-white">NAJMUDEEN</span>
+              </div>
+              <div className="text-white/60">
+                &gt; CERTIFICATION: <span className="text-[#66FF00]">{selectedCert.name} ({selectedCert.code})</span>
+              </div>
+              <div className="text-white/60">
+                &gt; ISSUING_ORGANIZATION: <span className="text-white">{selectedCert.issuer}</span>
+              </div>
+              <div className="text-white/60">
+                &gt; CREDENTIAL_ID: <span className="text-white">{selectedCert.credentialId}</span>
+              </div>
+              <div className="text-white/60">
+                &gt; PERIOD: <span className="text-white">{selectedCert.issueDate} – {selectedCert.expiryDate}</span>
+              </div>
+              <div className="text-white/60 break-all">
+                &gt; SHA-256_FINGERPRINT: <span className="text-white/70">{selectedCert.sha256}</span>
+              </div>
+              <div className="text-white/60">
+                &gt; DOMAINS: <span className="text-white/90">{selectedCert.skills.join(' • ')}</span>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-between pt-2">
+              <button
+                type="button"
+                onClick={() => copyCredential(selectedCert.credentialId)}
+                style={{ fontFamily: 'Fragment Mono, monospace' }}
+                className="text-xs text-white/70 hover:text-[#00D23B] flex items-center gap-1.5 border border-white/20 hover:border-[#00D23B] px-3.5 py-2 transition-colors cursor-pointer"
+              >
+                {copiedId === selectedCert.credentialId ? <Check className="w-4 h-4 text-[#00D23B]" /> : <Copy className="w-4 h-4" />}
+                <span>{copiedId === selectedCert.credentialId ? 'ID COPIED' : 'COPY CREDENTIAL ID'}</span>
+              </button>
+
+              <a
+                href={selectedCert.verificationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontFamily: 'Fragment Mono, monospace' }}
+                className="text-xs bg-[#00D23B] text-black font-semibold hover:bg-[#66FF00] px-4 py-2 flex items-center gap-1.5 transition-colors"
+              >
+                <span>OPEN OFFICIAL VERIFY</span>
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

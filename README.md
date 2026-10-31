@@ -24,6 +24,7 @@ A modern, hacker-themed personal portfolio website built with React and Vite. Fe
 | **Hero** | Landing section with name and terminal typing effect |
 | **Summary** | About section with personal introduction |
 | **Skills** | Technical skills and proficiencies |
+| **Certifications** | Accredited cybersecurity certifications and verified credentials |
 | **Projects** | Portfolio of completed projects |
 | **Tools** | Cybersecurity tools expertise (Nmap, Nikto, Wireshark, Metasploit, etc.) |
 | **Contact** | Contact form with email integration |
