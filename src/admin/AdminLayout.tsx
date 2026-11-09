@@ -45,7 +45,7 @@ export default function AdminLayout() {
               </div>
               <div>
                 <span style={{ fontFamily: 'PP Mondwest, monospace' }} className="text-lg tracking-wider text-white">
-                  NAT // CONTROL_CENTER
+                  ¶ // CONTROL_CENTER
                 </span>
                 <span className="ml-2 text-[10px] text-[#00D23B] border border-[#00D23B]/30 px-1.5 py-0.5 rounded uppercase font-mono">
                   ADMIN

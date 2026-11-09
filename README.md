@@ -1,4 +1,4 @@
-# NAT - Cybersecurity Portfolio
+# ¶ - Cybersecurity Portfolio
 
 A modern, hacker-themed personal portfolio website built with React and Vite. Features a terminal-inspired dark aesthetic with animated typing effects and smooth scroll-based navigation.
 
